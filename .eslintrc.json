@@ -1,0 +1,26 @@
+{
+  "env": {
+    "es6": true
+  },
+  "parserOptions": {
+    "ecmaVersion": 6,
+    "ecmaFeatures": {
+      "impliedStrict": true
+    }
+  },
+  "rules": {
+    "semi": "error",
+    "for-direction": "error",
+    "no-dupe-args": "error",
+    "no-empty": "warn",
+    "no-duplicate-case": "error",
+    "no-extra-semi": "error",
+    "no-sparse-arrays": "error",
+    "no-unreachable": "error",
+    "use-isnan": "error",
+    "valid-typeof": "warn",
+    "eqeqeq": "error",
+    "no-floating-decimal": "error",
+    "prefer-const": "error"
+  }
+}
