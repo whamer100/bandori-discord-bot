@@ -2,17 +2,26 @@
   "name": "bandori-discord-bot",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint --ext .js,.ts src/",
+    "start": "tsc --skipLibCheck && node dist/index.js",
+    "build": "tsc --skipLibCheck",
+    "cleanup": "rm -r ./dist/"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@types/node": "^14.0.27",
+    "bufferutil": "^4.0.1",
+    "discord-akairo": "^8.0.0",
     "discord.js": "^12.2.0",
     "dotenv": "^8.2.0",
-    "typescript": "^3.9.7"
+    "ramda": "^0.27.1",
+    "typescript": "^3.9.7",
+    "utf-8-validate": "^5.0.2"
   },
   "devDependencies": {
     "eslint": "^7.6.0"

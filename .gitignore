@@ -2,6 +2,9 @@
 ##  Node .gitignore  ##
 #######################
 
+# distribution stuff
+dist/
+
 # Logs
 logs
 *.log
