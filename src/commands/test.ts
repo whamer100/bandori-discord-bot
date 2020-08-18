@@ -1,4 +1,4 @@
-const { Command } = require('discord-akairo');
+import {Command} from 'discord-akairo';
 
 class TestCommand extends Command {
     constructor() {

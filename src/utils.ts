@@ -12,10 +12,10 @@ export const boxContents = (...texts: string[]) => { // borrowed from another bo
     return tail.reduce((all, text) => [...all, text, spacer], [spacer, head, spacer]).join("\n");
 };
 
-export const isOwner = (id: string) => (process.env.OWNERS || "136644132117413888")
+export const isOwner = (id: string): boolean => (process.env.OWNERS || "136644132117413888")
     .split(",")
     .some(R.equals(id));
 
 
-export const isMod = (member: GuildMember) =>
+export const isMod = (member: GuildMember): boolean =>
   member.hasPermission("KICK_MEMBERS") || isOwner(member.id)

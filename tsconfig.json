@@ -1,12 +1,13 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "es6",
+    "target": "es2019",
     "removeComments": true,
     "sourceMap": true,
     "preserveConstEnums": true,
     "outDir": "dist/",
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "lib": ["es6", "es2019", "dom"]
   },
   "include": [
     "src/**/*"

@@ -1,25 +1,39 @@
 require('dotenv').config()
 import { AkairoClient, CommandHandler  } from "discord-akairo";
 import { handleEvents } from "./events";
+import { updateMasterDB } from "./api/bestdoriHelper"
 import "./startup"
 
 const prefix = process.env.PREFIX || "b!";
 const TOKEN = process.env.TOKEN!
 
-const client = new AkairoClient(
-    {
-        ownerID: [],
-    }, {
-        disableMentions: "everyone"
+export class BotClient extends AkairoClient {
+    public commandHandler: CommandHandler;
+
+    constructor() {
+        super({
+            ownerID: [],
+        }, {
+            disableMentions: "everyone"
+        });
+        this.commandHandler = new CommandHandler(this, {
+            directory: "./dist/commands/",
+            prefix: prefix
+        })
     }
-);
+}
 
-const commandHandler = new CommandHandler(client, {
-    directory: "./dist/commands/",
-    prefix: prefix
-}).loadAll();
+const client = new BotClient();
+client.commandHandler.loadAll()
 
-handleEvents(client, commandHandler)
+export const commandCollection = client.commandHandler.modules
+
+handleEvents(client)
+
+updateMasterDB().catch((reason => {
+    console.log(`MasterDB update failed for reason ${reason}!`)
+    process.exit(1)
+}))
 
 console.log("Connecting bot...")
 client.login(TOKEN);
