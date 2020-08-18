@@ -20,8 +20,6 @@ const GameDataCache = new NodeCache({
     useClones: false
 })
 
-const respFailed: JSON = JSON.parse("{}") // respond with literally nothing
-
 type CacheStatus = { server: string, status: boolean }
 type ServerDate = { server: string, date: number }
 export type CharacterInfo = {
@@ -34,6 +32,7 @@ export type CharacterInfo = {
 }
 export type CardInfo = {
     id: number,
+    state: string,
     member: number,
     rarity: number,
     attr: string,
@@ -77,7 +76,7 @@ export const BDBand = {
     1: "popipa",
     2: "after",
     3: "harohapi",
-    4: "pasupale",
+    4: "paspale",
     5: "roselia",
     18: "raiseasuilen",
     21: "morfonica"
@@ -185,9 +184,9 @@ export const getGameData = async (loc: string): Promise<JSON> => {
     if (ttl === undefined || ttl === 0) {
         const requestURL = `${bestdoriEndpoint}/${loc}`
 
-        const resp = await axios.get(requestURL)
-        if (resp.status !== 200) {
-            return Promise.resolve(respFailed)
+        const resp = await axios.get(requestURL).catch(() => undefined)
+        if (resp === undefined || resp.status !== 200) {
+            return Promise.resolve(undefined)
         }
 
         const respData: JSON = resp.data
@@ -204,9 +203,9 @@ export const getGameResource = async (loc: string, server: number, cache?: boole
     if (cache) {
         const ttl = GameDataCache.getTtl(resourceID)
         if (ttl === undefined || ttl === 0) {
-            const resp = await axios.get(resourceURL, {responseType: 'arraybuffer'})
+            const resp = await axios.get(resourceURL, {responseType: 'arraybuffer'}).catch(() => undefined)
 
-            if (resp.status !== 200) {
+            if (resp === undefined || resp.status !== 200) {
                 return Promise.resolve(undefined)
             }
 
@@ -217,9 +216,9 @@ export const getGameResource = async (loc: string, server: number, cache?: boole
         return GameDataCache.get(resourceID)
     }
     else {
-        const resp = await axios.get(resourceURL, {responseType: 'arraybuffer'})
+        const resp = await axios.get(resourceURL, {responseType: 'arraybuffer'}).catch(() => undefined)
 
-        if (resp.status !== 200) {
+        if (resp === undefined || resp.status !== 200) {
             return Promise.resolve(undefined)
         }
 
@@ -252,7 +251,7 @@ export const selectEntry = (options: JSON | Object, language: number) => {
 export const getCharacterMeta = async (character: number, language = SLanguage.EN): Promise<CharacterInfo> => {
     const characterData: JSON = await getGameData(`characters/${character}.json`)
     const bandNames: JSON = await getGameData(bandURL)
-    if (characterData === respFailed) {
+    if (characterData === undefined) {
         return Promise.resolve<CharacterInfo>(undefined)
     }
     const charName: string = characterData["characterName"][language]
@@ -275,14 +274,15 @@ export const getCharacterMeta = async (character: number, language = SLanguage.E
     return Promise.resolve<CharacterInfo>(characterInfo)
 }
 
-export const getCardData = async (id: number, language: number): Promise<CardInfo>  => {
+export const getCardData = async (id: number, trained: boolean = false, language: number): Promise<CardInfo>  => {
     const cardData = await getGameData(`cards/${id}.json`)
-    if (cardData === respFailed) {
+    if (cardData === undefined) {
         return Promise.resolve<CardInfo>(undefined)
     }
 
     const cardInfo: CardInfo = {
         id: id,
+        state: (trained) ? "after_training" : "normal",
         member: cardData["characterId"],
         attr: cardData["attribute"],
         rarity: cardData["rarity"],

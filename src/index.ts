@@ -36,5 +36,6 @@ updateMasterDB().catch((reason => {
 }))
 
 console.log("Connecting bot...")
+// noinspection JSIgnoredPromiseFromCall becasue im annoying
 client.login(TOKEN);
 

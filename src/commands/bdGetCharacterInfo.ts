@@ -1,8 +1,7 @@
 import { Command } from 'discord-akairo';
 import {MessageAttachment, MessageEmbed} from 'discord.js'
 import {getCharacterMeta, BDCharacter, SLanguageLocale, SLanguage} from "../api/bestdoriHelper"
-import { distance, closest } from "fastest-levenshtein"
-import { readFile } from "fs/promises"
+import { closest } from "fastest-levenshtein"
 
 class BDGetCharacterInfo extends Command {
     constructor() {

@@ -1,7 +1,6 @@
 import * as sharp from "sharp"
 import {BDBand, CardInfo, CharacterInfo, getCharacterMeta} from "./bestdoriHelper";
 import {readFile} from "fs/promises";
-import {gravity, OverlayOptions, Sharp} from "sharp";
 import * as NodeCache from "node-cache";
 
 const frameBase = "./static/frame"
