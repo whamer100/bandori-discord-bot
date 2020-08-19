@@ -282,7 +282,7 @@ export const getCardData = async (id: number, trained: boolean = false, language
 
     const cardInfo: CardInfo = {
         id: id,
-        state: (trained) ? "after_training" : "normal",
+        state: (trained && cardData["rarity"] >= 3) ? "after_training" : "normal",
         member: cardData["characterId"],
         attr: cardData["attribute"],
         rarity: cardData["rarity"],

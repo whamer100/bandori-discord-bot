@@ -56,7 +56,7 @@ class BDGetCardInfo extends Command {
         /* const cardResBase = `characters/resourceset/${cardInfo.resSetName}_rip/card_${type}.png` */
 
         const cardThumbBuffer = Buffer.from(new Uint8Array(cardData))
-        const composedCardThumb = await composeCardFrame(cardThumbBuffer, cardInfo)
+        const composedCardThumb = await composeCardFrame(cardThumbBuffer, cardInfo, resolvedArg)
 
         const cardAttachment = new MessageAttachment(composedCardThumb, cardName)
 

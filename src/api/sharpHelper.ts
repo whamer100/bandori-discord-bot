@@ -2,6 +2,7 @@ import * as sharp from "sharp"
 import {BDBand, CardInfo, CharacterInfo, getCharacterMeta} from "./bestdoriHelper";
 import {readFile} from "fs/promises";
 import * as NodeCache from "node-cache";
+import {OverlayOptions} from "sharp";
 
 const frameBase = "./static/frame"
 const SharpCacheExpiryTime = 60 * 60 * 4 // 4 hours -> 14400 seconds
@@ -41,27 +42,49 @@ const selectBandmark = async (cardInfo: CardInfo): Promise<Buffer> => {
     return readAndCacheAsset(`/bandmark_${bandmark}.png`)
 }
 
-export const composeCardFrame = async (cardThumb: Buffer, cardInfo: CardInfo): Promise<Buffer> => {
-    const composite = sharp(cardThumb, sharpOptions)
+export const composeCardFrame = async (cardThumb: Buffer, cardInfo: CardInfo, trained: boolean): Promise<Buffer> => {
+    let composite = sharp(cardThumb, sharpOptions) // let used to allow adding layers
     const metadata = await composite.metadata()
     const selectedFrame = await selectFrame(cardInfo)
     const selectedAttr = await readAndCacheAsset(`/icon_attribute_${cardInfo.attr}.png`)
     const selectedBandmark = await selectBandmark(cardInfo)
+    const trainedType = (trained && cardInfo.rarity >= 3) ? "rainbow" : "yellow"
+    const starIconBuffer = await readAndCacheAsset(`/icon_rarity_${trainedType}.png`)
+    const starIcon = sharp(starIconBuffer, sharpOptions).resize({
+        width: 34,
+        height: 34
+    }) /**/
+    const starSmallBuf = await starIcon.toBuffer()
+    const starMeta = await starIcon.metadata()
 
-    composite.composite([{
-        input: selectedFrame,
-        left: 0,
-        top: 0
-    },{
-        input: selectedAttr,
-        top: 1,
-        left: metadata.width
-    },{
-        input: selectedBandmark,
-        left: 0,
-        top: 0
+    const compositeOptions: OverlayOptions[] = [
+        {
+            input: selectedFrame,
+            left: 0,
+            top: 0
+        },{
+            input: selectedAttr,
+            top: 1,
+            left: metadata.width
+        },{
+            input: selectedBandmark,
+            left: 0,
+            top: 0
+        }
+    ]
+
+    // TODO: FIX THIS LSIDHJFGJDSHGJKLSFJKLGHFSKLJGHFSLKG
+    for ( let i: number = 0; i < cardInfo.rarity; i++ ) {
+        const offset = (i > 0) ? starMeta.height : 0
+
+        compositeOptions.push({
+            input: starSmallBuf,
+            top: metadata.height - (3 + ((starMeta.height * i) + offset)),
+            left: 3,
+        })
     }
-    ])
+
+    composite.composite(compositeOptions)
 
     return composite.toBuffer()
 }
