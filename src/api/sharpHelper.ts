@@ -72,14 +72,13 @@ export const composeCardFrame = async (cardThumb: Buffer, cardInfo: CardInfo, tr
             top: 0
         }
     ]
-
-    // TODO: FIX THIS LSIDHJFGJDSHGJKLSFJKLGHFSKLJGHFSLKG
+    
     for ( let i: number = 0; i < cardInfo.rarity; i++ ) {
-        const offset = (i > 0) ? starMeta.height : 0
+        const offset = (starMeta.height * i) - Math.floor((starMeta.height / 4.5) * i)
 
         compositeOptions.push({
             input: starSmallBuf,
-            top: metadata.height - (3 + ((starMeta.height * i) + offset)),
+            top: metadata.height - starMeta.height - (offset) + 2, // (3 + ((starMeta.height * i) + offset)),
             left: 3,
         })
     }
