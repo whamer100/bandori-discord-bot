@@ -19,3 +19,32 @@ export const isOwner = (id: string): boolean => (process.env.OWNERS || "13664413
 
 export const isMod = (member: GuildMember): boolean =>
   member.hasPermission("KICK_MEMBERS") || isOwner(member.id)
+
+/**
+ * Ensures a string has an appropriate length
+ * Returns undefined if a string is null
+ * @param s Source string
+ * @param limit Threshold for when a new line should be created (does not limit the line to exactly this value!)
+ */
+export const wrapString = (s: string, limit: number = 24): string => {
+    // TODO: Refactor this to not use while loops
+    if (s === null) {
+        return undefined
+    }
+    const res = []
+    const items = s.split(" ")
+    let acc = 0
+    let i = 0
+    while (acc < s.length) { //
+        let a = ""
+        while (a.length < limit) {
+            a = [a, items[i++]]
+                .join(" ")
+                .trim()
+        }
+        acc += a.length
+        res.push(a)
+    }
+    return res.join("\n")
+}
+

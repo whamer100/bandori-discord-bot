@@ -53,9 +53,10 @@ export const composeCardFrame = async (cardThumb: Buffer, cardInfo: CardInfo, tr
     const starIcon = sharp(starIconBuffer, sharpOptions).resize({
         width: 34,
         height: 34
-    }) /**/
+    })
     const starSmallBuf = await starIcon.toBuffer()
     const starMeta = await starIcon.metadata()
+    const starMetaHeight = starMeta.height
 
     const compositeOptions: OverlayOptions[] = [
         {
@@ -72,13 +73,13 @@ export const composeCardFrame = async (cardThumb: Buffer, cardInfo: CardInfo, tr
             top: 0
         }
     ]
-    
-    for ( let i: number = 0; i < cardInfo.rarity; i++ ) {
-        const offset = (starMeta.height * i) - Math.floor((starMeta.height / 4.5) * i)
+
+    for ( let i: number = 0; i < cardInfo.rarity; i++ ) { // this is a mess, but it does what i want so lol
+        const offset = (starMetaHeight * i) - Math.floor((starMetaHeight / 4.5) * i)
 
         compositeOptions.push({
             input: starSmallBuf,
-            top: metadata.height - starMeta.height - (offset) + 2, // (3 + ((starMeta.height * i) + offset)),
+            top: metadata.height - starMetaHeight - (offset) + 2,
             left: 3,
         })
     }

@@ -35,6 +35,8 @@ updateMasterDB().catch((reason => {
     process.exit(1)
 }))
 
+// TODO: Add JSDocs to everything lol
+
 console.log("Connecting bot...")
 // noinspection JSIgnoredPromiseFromCall becasue im annoying
 client.login(TOKEN);

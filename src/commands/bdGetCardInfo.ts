@@ -1,19 +1,21 @@
 import { Command } from 'discord-akairo';
-import {MessageAttachment, MessageEmbed} from 'discord.js'
-import {getCardData, getGameResource, SLanguage} from "../api/bestdoriHelper"
+import {EmbedFieldData, MessageAttachment, MessageEmbed} from 'discord.js'
+import {getCardData, getCharacterMeta, getGameResource, SLanguage} from "../api/bestdoriHelper"
 import { distance, closest } from "fastest-levenshtein"
 import {composeCardFrame} from "../api/sharpHelper";
-
-const trainedCheck = [
-    "yes",
-    "trained",
-    "idolized"
-]
+import {wrapString} from "../utils";
 
 // check if an input is "truthy" enough
 const checkTrainedArg = (t: string): boolean => {
     const tmsg = t.toLowerCase()
-    return trainedCheck.includes(tmsg) || ["true", "1"].includes(tmsg) || (distance(closest(tmsg, trainedCheck), tmsg) <= 1)
+    const trainedCheck = [
+        "yes",
+        "trained",
+        "idolized"
+    ]
+    return trainedCheck.includes(tmsg)
+        || ["true", "1"].includes(tmsg)
+        || (distance(closest(tmsg, trainedCheck), tmsg) <= 1)
 }
 
 class BDGetCardInfo extends Command {
@@ -55,6 +57,8 @@ class BDGetCardInfo extends Command {
         const cardName = `card_thumb_${cardInfo.resSetName}_${type}.png`
         /* const cardResBase = `characters/resourceset/${cardInfo.resSetName}_rip/card_${type}.png` */
 
+        const cardMember = await getCharacterMeta(cardInfo.member, SLanguage.EN)
+
         const cardThumbBuffer = Buffer.from(new Uint8Array(cardData))
         const composedCardThumb = await composeCardFrame(cardThumbBuffer, cardInfo, resolvedArg)
 
@@ -62,17 +66,27 @@ class BDGetCardInfo extends Command {
 
         const cardURL = `https://bestdori.com/info/cards/${cardInfo.id}`
 
-        // TODO: Make the image thing
+        const embedFields: EmbedFieldData[] = [
+            { name: "Card ID:", value: cardInfo.id, inline: true },
+            { name: "Member:", value: cardMember.name, inline: true },
+            { name: "Attribute:", value: cardInfo.attr, inline: true },
+            // gachaText here (index = 3)
+            { name: "Skill:", value: [
+                    `Name: ${cardInfo.skillName}`,
+                    `ID: ${cardInfo.skillId}`
+                ].join("\n"), inline: true }
+        ]
+        // not always present
+        if (cardInfo.gachaText !== null) embedFields.splice(
+            3, 0, { name: "Gacha Text:", value: wrapString(cardInfo.gachaText), inline: true }
+            )
 
         const embed = new MessageEmbed()
             .setTitle(cardInfo.prefix)
             .setURL(cardURL)
-            .addField("id:", cardInfo.id, true)
-            .addField("memberid:", cardInfo.member, true)
-            .addField("attribute:", cardInfo.attr, true)
-            .addField("rarity:", cardInfo.rarity, true)
+            .addFields(embedFields)
             .attachFiles([cardAttachment])
-            .setImage(`attachment://${cardName}`)
+            .setThumbnail(`attachment://${cardName}`)
 
 
         return message.channel.send(embed);
