@@ -53,7 +53,7 @@ class BDGetCardInfo extends Command {
         const cardThumbFolder = `${Math.floor(cardInfo.id / 50)}`
 // https://bestdori.com/assets/en/thumb/chara/card00011_rip/res003022_normal.png
         const cardResBase = `thumb/chara/card${cardThumbFolder.padStart(5, "0")}_rip/${cardInfo.resSetName}_${type}.png`
-        const cardData = await getGameResource(cardResBase, SLanguage.EN, false)
+        const cardData = await getGameResource(cardResBase, SLanguage.JP, false)
         const cardName = `card_thumb_${cardInfo.resSetName}_${type}.png`
         /* const cardResBase = `characters/resourceset/${cardInfo.resSetName}_rip/card_${type}.png` */
 
@@ -89,7 +89,7 @@ class BDGetCardInfo extends Command {
             .setThumbnail(`attachment://${cardName}`)
 
 
-        return message.channel.send(embed);
+        return message.channel.send({embed});
     }
 }
 

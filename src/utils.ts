@@ -33,12 +33,16 @@ export const wrapString = (s: string, limit: number = 24): string => {
     }
     const res = []
     const items = s.split(" ")
+    const count = items.length
     let acc = 0
     let i = 0
-    while (acc < s.length) { //
+    while (acc < s.length) {
+        if (i >= count) break;
         let a = ""
         while (a.length < limit) {
-            a = [a, items[i++]]
+            const t = items[i++]
+            if (t === undefined) break;
+            a = [a, t]
                 .join(" ")
                 .trim()
         }

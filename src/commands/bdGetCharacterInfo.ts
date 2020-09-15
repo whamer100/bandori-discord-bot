@@ -49,7 +49,7 @@ class BDGetCharacterInfo extends Command {
             .attachFiles([characterIconAttachment])
             .setThumbnail(`attachment://${characterIconName}`)
 
-        return message.channel.send(embed);
+        return message.channel.send({embed});
     }
 }
 

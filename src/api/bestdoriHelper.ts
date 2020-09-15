@@ -279,7 +279,6 @@ export const getCardData = async (id: number, trained: boolean = false, language
     if (cardData === undefined) {
         return Promise.resolve<CardInfo>(undefined)
     }
-
     const cardInfo: CardInfo = {
         id: id,
         state: (trained && cardData["rarity"] >= 3) ? "after_training" : "normal",
