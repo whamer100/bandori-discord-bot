@@ -1,6 +1,6 @@
 import { Command } from 'discord-akairo';
 import {MessageAttachment, MessageEmbed} from 'discord.js'
-import {getCharacterMeta, BDCharacter, SLanguageLocale, SLanguage} from "../api/bestdoriHelper"
+import {getCharacterMeta, BDCharacter, SLanguageLocale, SLanguage, getMetaMember, MMType} from "../api/bestdoriHelper"
 import { closest } from "fastest-levenshtein"
 
 class BDGetCharacterInfo extends Command {
@@ -20,7 +20,12 @@ class BDGetCharacterInfo extends Command {
         // reminder of how attachments work for later lol
         // const attachment = new MessageAttachment(new Buffer(0), "attachment.png")
 
-        const character = closest(args["character"], Object.keys(BDCharacter))
+        const characterMeta = await getMetaMember(MMType.MMember, args["character"], true)
+        if (characterMeta === undefined) {
+            return message.channel.send("Unknown character!")
+        }
+
+        const character = characterMeta.item
 
         const characterInfo = await getCharacterMeta(BDCharacter[character])
         if (characterInfo === undefined) {

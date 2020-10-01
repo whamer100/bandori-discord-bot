@@ -1,5 +1,5 @@
 import * as sharp from "sharp"
-import {BDBand, CardInfo, CharacterInfo, getCharacterMeta} from "./bestdoriHelper";
+import {BDBand, CardInfo, CharacterInfo, getCharacterMeta, getGameResource, SLanguage} from "./bestdoriHelper";
 import {readFile} from "fs/promises";
 import * as NodeCache from "node-cache";
 import {OverlayOptions} from "sharp";
@@ -16,6 +16,14 @@ const SharpCache = new NodeCache({
     checkperiod: 120,
     useClones: false
 })
+
+export type CardData = {
+    cardID: number,
+    cardName: string,
+    cardThumbFolder: string,
+    cardInfo: CardInfo,
+    cardBuffer: Buffer
+}
 
 const readAndCacheAsset = async (loc: string): Promise<Buffer> => {
     const ttl = SharpCache.getTtl(loc)
@@ -87,4 +95,26 @@ export const composeCardFrame = async (cardThumb: Buffer, cardInfo: CardInfo, tr
     composite.composite(compositeOptions)
 
     return composite.toBuffer()
+}
+
+export const buildCard = async (card: CardInfo, trained: boolean): Promise<CardData> => {
+    const type = card.state
+
+    const cardThumbFolder = `${Math.floor(card.id / 50)}`
+// https://bestdori.com/assets/en/thumb/chara/card00011_rip/res003022_normal.png
+    const cardResBase = `thumb/chara/card${cardThumbFolder.padStart(5, "0")}_rip/${card.resSetName}_${type}.png`
+    const cardData = await getGameResource(cardResBase, SLanguage.JP, false)
+    const cardName = `card_thumb_${card.resSetName}_${type}.png`
+    /* const cardResBase = `characters/resourceset/${cardInfo.resSetName}_rip/card_${type}.png` */
+
+    const cardBuffer = Buffer.from(new Uint8Array(cardData))
+    const composedCardThumb = await composeCardFrame(cardBuffer, card, trained)
+
+    return {
+        cardID: card.id,
+        cardName: cardName,
+        cardThumbFolder: "",
+        cardInfo: card,
+        cardBuffer: composedCardThumb
+    }
 }

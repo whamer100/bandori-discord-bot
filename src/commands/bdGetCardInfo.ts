@@ -2,7 +2,7 @@ import { Command } from 'discord-akairo';
 import {EmbedFieldData, MessageAttachment, MessageEmbed} from 'discord.js'
 import {getCardData, getCharacterMeta, getGameResource, SLanguage} from "../api/bestdoriHelper"
 import { distance, closest } from "fastest-levenshtein"
-import {composeCardFrame} from "../api/sharpHelper";
+import {buildCard, composeCardFrame} from "../api/sharpHelper";
 import {wrapString} from "../utils";
 
 // check if an input is "truthy" enough
@@ -48,21 +48,13 @@ class BDGetCardInfo extends Command {
         if (cardInfo === undefined) {
             return message.channel.send("Unknown card id!")
         }
-        const type = cardInfo.state
 
-        const cardThumbFolder = `${Math.floor(cardInfo.id / 50)}`
-// https://bestdori.com/assets/en/thumb/chara/card00011_rip/res003022_normal.png
-        const cardResBase = `thumb/chara/card${cardThumbFolder.padStart(5, "0")}_rip/${cardInfo.resSetName}_${type}.png`
-        const cardData = await getGameResource(cardResBase, SLanguage.JP, false)
-        const cardName = `card_thumb_${cardInfo.resSetName}_${type}.png`
-        /* const cardResBase = `characters/resourceset/${cardInfo.resSetName}_rip/card_${type}.png` */
+        const cardData = await buildCard(cardInfo, resolvedArg)
 
         const cardMember = await getCharacterMeta(cardInfo.member, SLanguage.EN)
+        const cardThumbBuffer = cardData.cardBuffer
 
-        const cardThumbBuffer = Buffer.from(new Uint8Array(cardData))
-        const composedCardThumb = await composeCardFrame(cardThumbBuffer, cardInfo, resolvedArg)
-
-        const cardAttachment = new MessageAttachment(composedCardThumb, cardName)
+        const cardAttachment = new MessageAttachment(cardThumbBuffer, cardData.cardName)
 
         const cardURL = `https://bestdori.com/info/cards/${cardInfo.id}`
 
@@ -86,7 +78,7 @@ class BDGetCardInfo extends Command {
             .setURL(cardURL)
             .addFields(embedFields)
             .attachFiles([cardAttachment])
-            .setThumbnail(`attachment://${cardName}`)
+            .setThumbnail(`attachment://${cardData.cardName}`)
 
 
         return message.channel.send({embed});

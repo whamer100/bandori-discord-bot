@@ -1,6 +1,7 @@
 import axios from "axios"
 
 import * as NodeCache from "node-cache";
+import {QuickScore} from "quick-score";
 
 const bestdoriEndpoint = "https://bestdori.com/api"
 const bestdoriResourceEndpoint = "https://bestdori.com/assets"
@@ -8,6 +9,8 @@ const MDBCacheExpiryTime = 60 * 60 * 4 // 4 hours -> 14400 seconds
 const cacheExpiryTime = 60 * 4 // 4 minutes -> 240 seconds
 
 const bandURL = "bands/main.1.json"
+const charURL = "characters/all.2.json"
+const cardURL = "cards/all.5.json"
 
 const MasterDBCache = new NodeCache({
     stdTTL: MDBCacheExpiryTime,
@@ -44,6 +47,21 @@ export type CardInfo = {
     skillName: string,
     skillId: number,
     type: string
+}
+export type Band = {
+    bandID: number,
+    bandName: string,
+    members: CharacterInfo[]
+}
+
+type CardAssort = {
+    cardId: number,
+    characterId: number,
+    cardReleased: string[]
+}
+
+type CardAssortMap = {
+    [characterId: string]: CardAssort[]
 }
 
 export const Server = { // for use with cache generation
@@ -136,7 +154,11 @@ const BDPart = {
     "base_vocal": "Bass & Vocals",
     "guitar_vocal": "Guitar & Vocals"
 }
-
+export const MMType = {
+    MMember: 0,
+    MBand: 1,
+    MAny: 2
+}
 
 export const updateMasterDB = async () => {
     console.log("\nInitializing MasterDB cache...")
@@ -296,4 +318,190 @@ export const getCardData = async (id: number, trained: boolean = false, language
     }
 
     return Promise.resolve<CardInfo>(cardInfo)
+}
+
+export const getMetaMember = async (type: number, str: string, useID: boolean = false) => {
+    const bandJson = await getGameData(bandURL)
+
+    const MMembersPromise: Promise<string>[] = Object.keys(BDCharacter).map(async (value: string) => {
+        const characterMeta = await getCharacterMeta(BDCharacter[value])
+        return characterMeta.name
+    })
+    const MBands: string[] = Object.keys(BDBand).map((value: string) => {
+        return selectEntry(bandJson[value]["bandName"], SLanguage.EN)
+    })
+    const MMembers = await Promise.all(MMembersPromise)
+
+    const MAny = [...MMembers, ...MBands]
+
+    let qs;
+    if        (type === MMType.MBand) {
+        qs = new QuickScore(MBands)
+    } else if (type === MMType.MMember) {
+        qs = new QuickScore(MMembers)
+    } else if (type === MMType.MAny) {
+        qs = new QuickScore(MAny)
+    }
+    const res = qs.search(str)
+    console.log(res)
+    if (res.length === 0) {
+        return undefined
+    }
+    const resItem = res[0]["item"]
+    const typeCheck = () => {
+        if (MBands.includes(resItem)) {
+            return MMType.MBand
+        } else
+            return MMType.MMember
+    }
+    const getID = () => {
+        if (type === MMType.MMember) {
+            const bdk = Object.keys(BDCharacter)
+            const qs = new QuickScore(bdk)
+            const itemFirst = `${resItem}`.split(" ", 1)
+            const char = qs.search(itemFirst[0])
+            return char[0].item
+        } else {
+            const bdk = Object.values(BDBand)
+            const qs = new QuickScore(bdk)
+            const band = qs.search(resItem[0])
+            const bandItem = band[0].item
+            return Object.keys(BDBand)[bdk.indexOf(bandItem)]
+        }
+    }
+    const retType = (type === MMType.MAny) ? typeCheck() : type
+    return {
+        item: (useID) ? getID() : resItem,
+        type: retType
+    }
+}
+
+export const getBandMembers = async (band: number): Promise<number[]> => {
+    const charJson = await getGameData(charURL)
+    const ttlKey = "band_data"
+    const ttl = GameDataCache.getTtl(ttlKey)
+    if (ttl === undefined || ttl === 0) {
+        const characterValues = Object.values(BDCharacter)
+        const bandMap: Map<number, number[]> = new Map<number, number[]>()
+        characterValues.map((value) => {
+            const charTemp = charJson[value]
+            const charBandID = charTemp["bandId"]
+            if (!(bandMap.hasOwnProperty(charBandID))) {
+                bandMap[charBandID] = []
+            }
+            bandMap[charBandID].push(value)
+        })
+
+        GameDataCache.set(ttlKey, bandMap, cacheExpiryTime)
+    }
+    const targetBandMap = GameDataCache.get(ttlKey)
+    return targetBandMap[band]
+}
+
+export const getBand = async (bandID: number | string): Promise<Band> => {
+    const bandJson = await getGameData(bandURL)
+
+    if (typeof bandID === "string") {
+        const newBandID = await getMetaMember(MMType.MBand, bandID, true)
+        bandID = newBandID.item
+    }
+
+    const bandObject = bandJson[bandID]["bandName"]
+    const bandSelect: string = selectEntry(bandObject, SLanguage.EN)
+
+    const bandMembersIDs = await getBandMembers(+bandID)
+    const bandMembersPromise = bandMembersIDs.map(async value => {
+        return await getCharacterMeta(value)
+    })
+    const bandMembers = await Promise.all(bandMembersPromise)
+
+    return {
+        bandID: +bandID,
+        bandName: bandSelect,
+        members: bandMembers
+    }
+}
+
+const assortCards = async (): Promise<CardAssortMap> => {
+    const cardJson = await getGameData(cardURL)
+    const ttlKey = "card_data"
+    const ttl = GameDataCache.getTtl(ttlKey)
+    if (ttl === undefined || ttl === 0) {
+        const cards = Object.keys(cardJson)
+        const cardMap: CardAssortMap = {}
+        //console.log("--------------------------")
+        cards.map((cardId) => {
+            const cardEntry: JSON = cardJson[cardId]
+            const characterId: string = `${cardEntry["characterId"]}`
+            const newCardEntry: CardAssort = {
+                cardId: +cardId,
+                characterId: +characterId,
+                cardReleased: cardEntry["releasedAt"]
+            }
+            //console.log(typeof cardMap[characterId])
+            //console.log(cardMap[characterId])
+            //console.log("--------------------------")
+            if (cardMap[characterId] === undefined) {
+                cardMap[characterId] = [newCardEntry]
+            } else {
+                //console.log(cardMap[characterId])
+                cardMap[characterId] = [...cardMap[characterId], newCardEntry]
+            }
+            //console.log(cardMap[characterId])
+            /*
+            {
+                console.log("i am working here");
+                (cardId === "1" || cardId === "5") ? console.log(cardMap[characterId]) : ""
+            }/**/
+        })
+        //console.log(Object.values(cardMap).length)
+        GameDataCache.set(ttlKey, cardMap, cacheExpiryTime)
+    }
+    /*
+    {
+        const cardMap: CardAssortMap = GameDataCache.get(ttlKey)
+        let i = 0;
+        Object.values(cardMap).map((value => {
+            i += value.length
+        }))
+        console.log(i)
+    }/**/
+    return GameDataCache.get(ttlKey)
+}
+
+export const getLatestCard = async (member: CharacterInfo, server: number): Promise<CardInfo> => {
+    //console.log("--------------------------")
+    const cardReleaseMap: CardAssortMap = await assortCards()
+    const memid = (member.id).toString(10)
+    //console.log("i work, trust me")
+    const cardReleaseChar: CardAssort[] = cardReleaseMap[memid] // it has to be a string, bcause javascript sucks
+    //console.log(cardReleaseChar)
+    //console.log(cardReleaseChar)
+    //console.log(cardReleaseChar.length)
+
+    const latestCard: CardAssort = cardReleaseChar.reduce(function(prev, current) {
+        const prevTime = prev.cardReleased[server]
+        const curTime = current.cardReleased[server]
+        //console.log(prev.cardId, prevTime, current.cardId, curTime)
+
+        if (new Date(+curTime ) > new Date()) return prev
+        if (new Date(+prevTime) > new Date()) return prev
+
+        return (new Date(+prevTime) > new Date(+curTime)) ? prev : current
+    })
+
+    /*cardReleaseChar.reduce(
+        (prev, current) => {
+            const prevTime = prev["cardReleased"][server]
+            const currentTime = current["cardReleased"][server]
+
+            if (currentTime === null) {
+                return prev
+            }
+
+            return (+prevTime > +currentTime) ? prev : current
+        }
+    )*/
+
+    return await getCardData(latestCard["cardId"], false, server)
 }

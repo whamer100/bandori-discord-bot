@@ -1,4 +1,5 @@
 require('dotenv').config()
+import 'source-map-support/register'
 import { AkairoClient, CommandHandler  } from "discord-akairo";
 import { handleEvents } from "./events";
 import { updateMasterDB } from "./api/bestdoriHelper"
