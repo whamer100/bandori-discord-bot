@@ -63,8 +63,8 @@ class BDLastCardCommand extends Command {
 
         itemField.push({ name: "Type:", value: (target.type) ? "Band" : "Member", inline: true })
 
-        //TODO: Have the thing get all the needed information for the latest cards
         //TODO: Create an image showing the cards and their latest release
+        //TODO: Make it show the cards in the cool idea i had
 
         const embed = new MessageEmbed()
             .addFields(itemField)

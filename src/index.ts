@@ -37,6 +37,7 @@ updateMasterDB().catch((reason => {
 }))
 
 // TODO: Add JSDocs to everything lol
+// TODO: Add Server-Updating Forced Cache Missing
 
 console.log("Connecting bot...")
 // noinspection JSIgnoredPromiseFromCall becasue im annoying

@@ -6,6 +6,7 @@ import {QuickScore} from "quick-score";
 const bestdoriEndpoint = "https://bestdori.com/api"
 const bestdoriResourceEndpoint = "https://bestdori.com/assets"
 const MDBCacheExpiryTime = 60 * 60 * 4 // 4 hours -> 14400 seconds
+const cacheSlowExpiryTime = 60 * 60 // 1 hour -> 3600 seconds
 const cacheExpiryTime = 60 * 4 // 4 minutes -> 240 seconds
 
 const bandURL = "bands/main.1.json"
@@ -455,7 +456,7 @@ const assortCards = async (): Promise<CardAssortMap> => {
             }/**/
         })
         //console.log(Object.values(cardMap).length)
-        GameDataCache.set(ttlKey, cardMap, cacheExpiryTime)
+        GameDataCache.set(ttlKey, cardMap, cacheSlowExpiryTime)
     }
     /*
     {
@@ -505,3 +506,5 @@ export const getLatestCard = async (member: CharacterInfo, server: number): Prom
 
     return await getCardData(latestCard["cardId"], false, server)
 }
+
+//TODO: add stuff
